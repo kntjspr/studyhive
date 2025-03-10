@@ -98,14 +98,6 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
 
-              _buildMenuItem(
-                icon: Icons.person_outline,
-                title: "Personal Information",
-                onTap: () {
-                  // TODO: Navigate to personal information page
-                },
-              ),
-
               // Spacer to push sign out button to bottom
               const Spacer(),
 

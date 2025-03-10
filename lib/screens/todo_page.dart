@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:studyhive/widgets/custom_navbar.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -10,6 +11,7 @@ class TodoPage extends StatefulWidget {
 
 class _TodoPageState extends State<TodoPage> {
   final TextEditingController _taskController = TextEditingController();
+  int _selectedIndex = 1; // Default to middle tab
 
   // Sample todo items matching the image
   final List<TodoItem> _todoItems = [
@@ -229,29 +231,23 @@ class _TodoPageState extends State<TodoPage> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(Icons.chat_bubble_outline, false),
-              _buildNavItem(Icons.hexagon_outlined, true),
-              _buildNavItem(Icons.notifications_none, false),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+
+          // Optional: Add navigation logic based on index
+          if (index == 0) {
+            // Navigate to chat
+          } else if (index == 1) {
+            // Navigate to home
+            Navigator.pop(context);
+          } else if (index == 2) {
+            // Navigate to notifications
+          }
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewTodo,
@@ -324,32 +320,6 @@ class _TodoPageState extends State<TodoPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isSelected) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFF9800) : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: Colors.orange.withOpacity(0.3),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(
-        icon,
-        size: 28,
-        color: isSelected ? Colors.white : const Color(0xFFFF9800),
       ),
     );
   }

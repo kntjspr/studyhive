@@ -5,6 +5,7 @@ import 'package:studyhive/screens/meetings_page.dart';
 import 'package:studyhive/screens/todo_page.dart';
 import 'package:studyhive/screens/calendar_page.dart';
 import 'package:studyhive/screens/files_page.dart';
+import 'package:studyhive/widgets/custom_navbar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -151,29 +152,13 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(0, Icons.chat_bubble_outline, Colors.orange),
-              _buildNavItem(1, Icons.hexagon_outlined, const Color(0xFFFF9800)),
-              _buildNavItem(2, Icons.notifications_none, Colors.orange),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }
@@ -204,28 +189,49 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             child: Center(
-              child: Image.asset(
-                imagePath,
-                width: 100,
-                height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback to placeholder if image doesn't exist
-                  return Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+              child: imagePath == 'assets/images/group_meeting.png'
+                  ? Image.asset(
+                      imagePath,
+                      width: 250,
+                      height: 250,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 250,
+                          height: 250,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.image,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      imagePath,
+                      width: 150,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.image,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                        );
+                      },
                     ),
-                    child: const Icon(
-                      Icons.image,
-                      color: Colors.grey,
-                      size: 50,
-                    ),
-                  );
-                },
-              ),
             ),
           ),
         ),
@@ -240,36 +246,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon, Color color) {
-    final isSelected = _selectedIndex == index;
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFF9800) : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: Colors.orange.withOpacity(0.3),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: IconButton(
-        icon: Icon(
-          icon,
-          size: 28,
-          color: isSelected ? Colors.white : color,
-        ),
-        onPressed: () => setState(() => _selectedIndex = index),
-      ),
     );
   }
 }

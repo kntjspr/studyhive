@@ -29,7 +29,7 @@ class MeetingsPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/meeting_illustration.png',
+              'assets/images/group_meeting.png',
               width: 150,
               height: 150,
               fit: BoxFit.contain,
