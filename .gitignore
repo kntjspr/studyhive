@@ -6,8 +6,9 @@
 *.swp
 .buildlog/
 .history
-
-
+.cursorrules
+/.cursor
+.cursor
 
 # Flutter repo-specific
 /bin/cache/
