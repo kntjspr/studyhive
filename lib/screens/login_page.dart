@@ -45,11 +45,12 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(width: 6),
+                        // StudyHive vector
                         Image.asset(
                           "assets/images/vector.png",
                           // logo size dynamic based on the viewport width
-                          width: MediaQuery.of(context).size.width * 0.2,
-                          height: MediaQuery.of(context).size.width * 0.05,
+                          width: MediaQuery.of(context).size.width * 0.35,
+                          height: MediaQuery.of(context).size.width * 0.1,
                           fit: BoxFit.contain,
                         ),
                       ],
@@ -59,8 +60,8 @@ class _LoginPageState extends State<LoginPage> {
 
                     // Honeycomb Logo
                     Container(
-                      width: 200,
-                      height: 150,
+                      width: 350,
+                      height: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         gradient: const LinearGradient(
@@ -76,8 +77,8 @@ class _LoginPageState extends State<LoginPage> {
                       child: Center(
                         child: Image.asset(
                           "assets/images/beehive.png",
-                          width: 120,
-                          height: 120,
+                          width: MediaQuery.of(context).size.width * 0.8,
+                          height: MediaQuery.of(context).size.width * 0.5,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -91,11 +92,13 @@ class _LoginPageState extends State<LoginPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                           colors: const [
-                            Color(0xFFFFF9A),
+                            Color(0xFFFF9A),
                             Color(0xFFFBCF8C),
                           ],
-                          stops: [0.0, 1.0],
+                          stops: [0.0, 0.80],
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -103,9 +106,9 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           Text(
                             "Login",
-                            style: GoogleFonts.poppins(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
                               color: const Color(0xFF8B4513),
                             ),
                           ),
@@ -244,13 +247,14 @@ class HoneycombBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFFFF9C4),
-            Color(0xFFFFCC80),
+            Color(0xFFFFFFFF).withOpacity(0.4),
+            Color(0xFFFFF6A3).withOpacity(0.1),
+            Color(0xFFFF9900),
           ],
         ),
       ),

@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
           seedColor: const Color(0xFF6949FF),
           primary: const Color(0xFF6949FF),
           secondary: const Color(0xFF7B61FF),
-          background: Colors.white,
+          surface: Colors.white,
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
         useMaterial3: true,
