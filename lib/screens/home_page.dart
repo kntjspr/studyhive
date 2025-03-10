@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/screens/profile_page.dart';
+import 'package:studyhive/screens/meetings_page.dart';
+import 'package:studyhive/screens/task_list_page.dart';
+import 'package:studyhive/screens/calendar_page.dart';
+import 'package:studyhive/screens/files_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,15 +16,44 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 1;
 
+  // Navigation functions
+  void _navigateToMeetings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MeetingsPage()),
+    );
+  }
+
+  void _navigateToTaskList() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TaskListPage()),
+    );
+  }
+
+  void _navigateToCalendar() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CalendarPage()),
+    );
+  }
+
+  void _navigateToFiles() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FilesPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF59D), // Lighter yellow background
+      backgroundColor: const Color(0xFFFFF59D), // Light yellow background
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFFFF9800), size: 30),
+          icon: const Icon(Icons.menu, color: Colors.black87, size: 30),
           onPressed: () {
             // Navigate to profile page
             Navigator.push(
@@ -30,21 +63,12 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFFF9800),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.hexagon_outlined,
-                  color: Colors.black,
-                  size: 24,
-                ),
-              ),
+            Image.asset(
+              'assets/images/beehive.png',
+              width: 30,
+              height: 30,
             ),
             const SizedBox(width: 8),
             Text(
@@ -57,125 +81,72 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+        centerTitle: true,
+        actions: [
+          // Empty action to balance the leading icon
+          const SizedBox(width: 48),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Column(
           children: [
             // Group Meeting Card
-            _buildCard(
+            _buildFeatureCard(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
               ),
               height: 160,
-              child: Center(
-                child: Image.asset(
-                  'assets/images/meeting_illustration.png',
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.contain,
-                ),
-              ),
+              imagePath: 'assets/images/meeting_illustration.png',
               label: "Group Meeting Discussion\nand Livestream",
+              onTap: _navigateToMeetings,
             ),
 
             const SizedBox(height: 20),
 
             // Task List Card
-            _buildCard(
+            _buildFeatureCard(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFB2DFDB), Color(0xFF80CBC4)],
+                colors: [Color(0xFFDCEDC8), Color(0xFFAED581)],
               ),
               height: 120,
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        5,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFE57373),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        5,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Container(
-                            width: 100 - (index * 15),
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3F51B5),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              imagePath: 'assets/images/task_list.png',
               label: "Task List",
+              onTap: _navigateToTaskList,
             ),
 
             const SizedBox(height: 20),
 
             // Calendar Card
-            _buildCard(
+            _buildFeatureCard(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFFCDD2), Color(0xFFFFB74D)],
+                colors: [Color(0xFFFFCDD2), Color(0xFFFFAB91)],
               ),
               height: 120,
-              child: Center(
-                child: Image.asset(
-                  'assets/images/calendar_icon.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
-              ),
+              imagePath: 'assets/images/calendar_icon.png',
               label: "Calendar",
+              onTap: _navigateToCalendar,
             ),
 
             const SizedBox(height: 20),
 
             // Files Card
-            _buildCard(
+            _buildFeatureCard(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+                colors: [Color(0xFFE1F5FE), Color(0xFFB3E5FC)],
               ),
               height: 120,
-              child: Center(
-                child: Image.asset(
-                  'assets/images/files_icon.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
-              ),
+              imagePath: 'assets/images/files_icon.png',
               label: "Files",
+              onTap: _navigateToFiles,
             ),
           ],
         ),
@@ -193,13 +164,13 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.chat_bubble_outline, Icons.chat_bubble),
-              _buildNavItem(1, Icons.hexagon_outlined, Icons.hexagon),
-              _buildNavItem(2, Icons.notifications_none, Icons.notifications),
+              _buildNavItem(0, Icons.chat_bubble_outline, Colors.orange),
+              _buildNavItem(1, Icons.hexagon_outlined, const Color(0xFFFF9800)),
+              _buildNavItem(2, Icons.notifications_none, Colors.orange),
             ],
           ),
         ),
@@ -207,29 +178,56 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCard({
+  Widget _buildFeatureCard({
     required LinearGradient gradient,
     required double height,
-    required Widget child,
+    required String imagePath,
     required String label,
+    required VoidCallback onTap,
   }) {
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          height: height,
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            height: height,
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Image.asset(
+                imagePath,
+                width: 100,
+                height: 100,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to placeholder if image doesn't exist
+                  return Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.image,
+                      color: Colors.grey,
+                      size: 50,
+                    ),
+                  );
+                },
               ),
-            ],
+            ),
           ),
-          child: child,
         ),
         const SizedBox(height: 8),
         Text(
@@ -245,16 +243,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildNavItem(
-      int index, IconData unselectedIcon, IconData selectedIcon) {
+  Widget _buildNavItem(int index, IconData icon, Color color) {
     final isSelected = _selectedIndex == index;
-    return IconButton(
-      icon: Icon(
-        isSelected ? selectedIcon : unselectedIcon,
-        size: 28,
-        color: isSelected ? const Color(0xFFFF9800) : Colors.grey,
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFFF9800) : Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.3),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
-      onPressed: () => setState(() => _selectedIndex = index),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          size: 28,
+          color: isSelected ? Colors.white : color,
+        ),
+        onPressed: () => setState(() => _selectedIndex = index),
+      ),
     );
   }
 }

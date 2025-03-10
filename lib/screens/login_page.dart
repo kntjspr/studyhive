@@ -119,8 +119,9 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: Column(
                               children: [
-                                const SizedBox(
-                                    height: 150), // Spacing between Login text
+                                SizedBox(
+                                    height: MediaQuery.of(context).size.width *
+                                        0.25), // Spacing between Login text
                                 Text(
                                   "Login",
                                   style: GoogleFonts.montserrat(
@@ -311,7 +312,7 @@ class _LoginPageState extends State<LoginPage> {
                                     "assets/images/beehive.png",
                                     width: MediaQuery.of(context).size.width *
                                         0.25,
-                                    height: MediaQuery.of(context).size.width *
+                                    height: MediaQuery.of(context).size.height *
                                         0.25,
                                     fit: BoxFit.contain,
                                   ),
