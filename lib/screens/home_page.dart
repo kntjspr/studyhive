@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/screens/profile_page.dart';
 import 'package:studyhive/screens/meetings_page.dart';
-import 'package:studyhive/screens/task_list_page.dart';
+import 'package:studyhive/screens/todo_page.dart';
 import 'package:studyhive/screens/calendar_page.dart';
 import 'package:studyhive/screens/files_page.dart';
 
@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   void _navigateToTaskList() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const TaskListPage()),
+      MaterialPageRoute(builder: (context) => const TodoPage()),
     );
   }
 

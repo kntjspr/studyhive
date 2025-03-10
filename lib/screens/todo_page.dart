@@ -11,13 +11,23 @@ class TodoPage extends StatefulWidget {
 class _TodoPageState extends State<TodoPage> {
   final TextEditingController _taskController = TextEditingController();
 
+  // Sample todo items matching the image
+  final List<TodoItem> _todoItems = [
+    TodoItem(title: "HCI - LESSON 7-10 STUDY", isCompleted: false),
+    TodoItem(title: "ENVI SCI - LESSON 11 STUDY", isCompleted: false),
+    TodoItem(title: "FDS - MEETING", isCompleted: false),
+    TodoItem(title: "CSMATH211 - REVISIONS", isCompleted: false),
+    TodoItem(title: "CSMATH211 - QUIZZIZ", isCompleted: false),
+    TodoItem(title: "CSMATH211 - VID PRESENTATION", isCompleted: false),
+  ];
+
   @override
   void dispose() {
     _taskController.dispose();
     super.dispose();
   }
 
-  void _showAddTaskDialog() {
+  void _addNewTodo() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -49,11 +59,19 @@ class _TodoPageState extends State<TodoPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement add task logic
-              Navigator.pop(context);
+              if (_taskController.text.isNotEmpty) {
+                setState(() {
+                  _todoItems.add(TodoItem(
+                    title: _taskController.text.toUpperCase(),
+                    isCompleted: false,
+                  ));
+                  _taskController.clear();
+                });
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: const Color(0xFFFFCA28),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -74,36 +92,61 @@ class _TodoPageState extends State<TodoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:
+          const Color(0xFFFFF59D), // Light yellow background matching the image
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1F1F1F)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          "Todo List",
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1F1F1F),
-          ),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/beehive.png',
+              width: 30,
+              height: 30,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "StudyHive",
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.black),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.camera_alt_outlined, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          // Task list visualization at the top
+          Container(
+            width: double.infinity,
+            height: 150,
+            margin: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFFAED581), Color(0xFFFFD54F)],
+              ),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -111,54 +154,210 @@ class _TodoPageState extends State<TodoPage> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 4,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(2),
+                const SizedBox(width: 20),
+                // Red squares column
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => Container(
+                      width: 20,
+                      height: 20,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE57373),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Study Mathematics",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1F1F1F),
-                        ),
+                const SizedBox(width: 15),
+                // Blue bars column
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => Container(
+                      width: 120 - (index * 20),
+                      height: 15,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3F51B5),
+                        borderRadius: BorderRadius.circular(7),
                       ),
-                      Text(
-                        "Chapter 4: Calculus",
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: const Color(0xFF666666),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Checkbox(
-                  value: false,
-                  onChanged: (value) {},
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+
+          // "All to-dos:" label
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD54F),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              "All to-dos:",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown,
+              ),
+            ),
+          ),
+
+          // Todo list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _todoItems.length,
+              itemBuilder: (context, index) {
+                return _buildTodoItem(_todoItems[index]);
+              },
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(Icons.chat_bubble_outline, false),
+              _buildNavItem(Icons.hexagon_outlined, true),
+              _buildNavItem(Icons.notifications_none, false),
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTaskDialog,
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        onPressed: _addNewTodo,
+        backgroundColor: const Color(0xFFFFCA28),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
+
+  Widget _buildTodoItem(TodoItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          // Checkbox image (you'll need to provide these assets)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                item.isCompleted = !item.isCompleted;
+              });
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFD54F),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Center(
+                child: item.isCompleted
+                    ? Image.asset(
+                        'assets/images/checkbox_checked.png',
+                        width: 20,
+                        height: 20,
+                        // If you don't have these assets yet, use Icons instead
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.check_box,
+                          color: Colors.brown,
+                          size: 20,
+                        ),
+                      )
+                    : Image.asset(
+                        'assets/images/checkbox_unchecked.png',
+                        width: 20,
+                        height: 20,
+                        // If you don't have these assets yet, use Icons instead
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.check_box_outline_blank,
+                          color: Colors.brown,
+                          size: 20,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          // Task title
+          Expanded(
+            child: Text(
+              item.title,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                decoration:
+                    item.isCompleted ? TextDecoration.lineThrough : null,
+                color: item.isCompleted ? Colors.grey : Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, bool isSelected) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFFF9800) : Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.3),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Icon(
+        icon,
+        size: 28,
+        color: isSelected ? Colors.white : const Color(0xFFFF9800),
+      ),
+    );
+  }
+}
+
+class TodoItem {
+  String title;
+  bool isCompleted;
+
+  TodoItem({required this.title, required this.isCompleted});
 }
