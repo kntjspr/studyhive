@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/widgets/custom_navbar.dart';
+import 'package:studyhive/screens/messages_page.dart';
+import 'package:studyhive/screens/notification_page.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -238,14 +240,23 @@ class _TodoPageState extends State<TodoPage> {
             _selectedIndex = index;
           });
 
-          // Optional: Add navigation logic based on index
+          // Navigation logic based on index
           if (index == 0) {
-            // Navigate to chat
+            // Navigate to chat/messages
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const MessagesPage(showNavBar: true)),
+            );
           } else if (index == 1) {
             // Navigate to home
             Navigator.pop(context);
           } else if (index == 2) {
             // Navigate to notifications
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationPage()),
+            );
           }
         },
       ),

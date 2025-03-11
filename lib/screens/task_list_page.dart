@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:studyhive/widgets/custom_navbar.dart';
+import 'package:studyhive/screens/messages_page.dart';
+import 'package:studyhive/screens/notification_page.dart';
+import 'package:studyhive/screens/home_page.dart';
 
 class TaskListPage extends StatefulWidget {
   const TaskListPage({super.key});
@@ -16,6 +20,8 @@ class _TaskListPageState extends State<TaskListPage> {
     Task(title: "Study for Physics Quiz", isCompleted: false),
     Task(title: "Submit Literature Essay", isCompleted: true),
   ];
+
+  int _selectedIndex = 1; // Default to middle tab
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +55,37 @@ class _TaskListPageState extends State<TaskListPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+
+          // Navigation logic based on index
+          if (index == 0) {
+            // Navigate to messages page
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const MessagesPage(showNavBar: true)),
+            );
+          } else if (index == 1) {
+            // Navigate to home
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+              (route) => false,
+            );
+          } else if (index == 2) {
+            // Navigate to notifications
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationPage()),
+            );
+          }
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewTask,

@@ -16,9 +16,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6949FF),
-          primary: const Color(0xFF6949FF),
-          secondary: const Color(0xFF7B61FF),
+          seedColor: const Color(0xFFFFCA28),
+          primary: const Color(0xFFFFCA28),
+          secondary: const Color(0xFF8B4513),
           surface: Colors.white,
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),

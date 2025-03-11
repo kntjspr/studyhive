@@ -30,7 +30,7 @@ class CustomNavBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildNavItem(0, "assets/icons/chat.png"),
-            _buildNavItem(1, "assets/icons/home.png"),
+            _buildHomeButton(1, "assets/icons/home.png"),
             _buildNavItem(2, "assets/icons/notification.png"),
           ],
         ),
@@ -67,6 +67,42 @@ class CustomNavBar extends StatelessWidget {
             width: 24,
             height: 24,
             color: isSelected ? Colors.white : const Color(0xFFFF9800),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeButton(int index, String imagePath) {
+    final bool isSelected = selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () => onItemTapped(index),
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFFFF9800).withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              spreadRadius: isSelected ? 2 : 0,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Image.asset(
+            imagePath,
+            width: 32,
+            height: 32,
+            // Using the original image without color tinting
+            color: null,
           ),
         ),
       ),
