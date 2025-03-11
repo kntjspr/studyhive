@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const MessagesPage(showNavBar: false),
     const HomeContent(),
-    const NotificationPage(),
+    const NotificationPage(showNavBar: false),
   ];
 
   @override

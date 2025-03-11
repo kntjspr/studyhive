@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/widgets/custom_navbar.dart';
+import 'package:studyhive/screens/home_page.dart';
 
 class NotificationPage extends StatelessWidget {
-  const NotificationPage({super.key});
+  final bool showNavBar;
+
+  const NotificationPage({
+    super.key,
+    this.showNavBar = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +24,7 @@ class NotificationPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
                 children: [
-                  // Back button
+                  // Back button - only show if not accessed via bottom nav
                   Container(
                     width: 40,
                     height: 40,
@@ -29,7 +35,19 @@ class NotificationPage extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, size: 20),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        // Check if we can pop the current route
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          // If we can't pop, navigate to home
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const HomePage()),
+                          );
+                        }
+                      },
                       padding: EdgeInsets.zero,
                     ),
                   ),
@@ -145,16 +163,20 @@ class NotificationPage extends StatelessWidget {
               ),
             ),
 
-            // Using the custom navbar
-            CustomNavBar(
-              selectedIndex: 2, // Notification tab is selected
-              onItemTapped: (index) {
-                // Handle navigation
-                if (index != 2) {
-                  Navigator.pop(context);
-                }
-              },
-            ),
+            // Using the custom navbar - only show if accessed directly
+            if (showNavBar)
+              CustomNavBar(
+                selectedIndex: 2, // Notification tab is selected
+                onItemTapped: (index) {
+                  // Handle navigation
+                  if (index != 2) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
+                  }
+                },
+              ),
           ],
         ),
       ),
