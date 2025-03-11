@@ -24,9 +24,8 @@ StudyHive is a comprehensive study management application designed to help stude
 ## 🖼️ Screenshots
 
 <p align="center">
-  <img src="mockups/login-screen.png" alt="Login Screen" width="200" />
-  <img src="mockups/home-screen.png" alt="Home Screen" width="200" />
-  <img src="mockups/calendar-screen.png" alt="Calendar Screen" width="200" />
+  <img src="mockups/login-page.png" alt="Login Screen" width="200" />
+  <img src="mockups/homepage.png" alt="Home Screen" width="200" />
 </p>
 
 ## 🛠️ Technology Stack
