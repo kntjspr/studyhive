@@ -13,6 +13,10 @@ class NotificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF6D9), // Light yellow background
       body: SafeArea(
@@ -21,20 +25,22 @@ class NotificationPage extends StatelessWidget {
           children: [
             // Header section with back button and title
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: EdgeInsets.fromLTRB(isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 12 : 16, isSmallScreen ? 12 : 16, 0),
               child: Row(
                 children: [
                   // Back button - only show if not accessed via bottom nav
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: isSmallScreen ? 36 : 40,
+                    height: isSmallScreen ? 36 : 40,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, size: 20),
+                      icon:
+                          Icon(Icons.arrow_back, size: isSmallScreen ? 18 : 20),
                       onPressed: () {
                         // Check if we can pop the current route
                         if (Navigator.canPop(context)) {
@@ -58,36 +64,42 @@ class NotificationPage extends StatelessWidget {
                           Text(
                             "Mail & Notifications",
                             style: GoogleFonts.poppins(
-                              fontSize: 20,
+                              fontSize: isSmallScreen ? 18 : 20,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
                           ),
                           Container(
-                            margin: const EdgeInsets.only(top: 8),
+                            margin: EdgeInsets.only(top: isSmallScreen ? 6 : 8),
                             height: 2,
-                            width: 160,
+                            width: isSmallScreen ? 140 : 160,
                             color: const Color(0xFFFF9900),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40), // Balance the back button
+                  SizedBox(
+                      width:
+                          isSmallScreen ? 36 : 40), // Balance the back button
                 ],
               ),
             ),
 
             // Mark all read and sort options
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              padding: EdgeInsets.fromLTRB(
+                  isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 20 : 24,
+                  isSmallScreen ? 12 : 16,
+                  isSmallScreen ? 6 : 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Mark all read",
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: isSmallScreen ? 12 : 14,
                       color: Colors.black54,
                     ),
                   ),
@@ -96,14 +108,14 @@ class NotificationPage extends StatelessWidget {
                       Text(
                         "Sort by time",
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: isSmallScreen ? 12 : 14,
                           color: Colors.black54,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.keyboard_arrow_down,
-                        color: Color(0xFFFF9900),
-                        size: 20,
+                        color: const Color(0xFFFF9900),
+                        size: isSmallScreen ? 18 : 20,
                       ),
                     ],
                   ),
@@ -192,6 +204,10 @@ class NotificationPage extends StatelessWidget {
     required Color backgroundColor,
     required bool showMoreIcon,
   }) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -199,32 +215,38 @@ class NotificationPage extends StatelessWidget {
           bottom: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 10 : 12),
       child: Row(
         children: [
           // Profile image with orange border
           Container(
-            width: 48,
-            height: 48,
+            width: isSmallScreen ? 42 : 48,
+            height: isSmallScreen ? 42 : 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFFF9900), width: 2),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(isSmallScreen ? 21 : 24),
               child: Image.asset(
                 profileImage,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return CircleAvatar(
                     backgroundColor: Colors.grey.shade300,
-                    child: const Icon(Icons.person, color: Colors.white),
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
                   );
                 },
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isSmallScreen ? 10 : 12),
 
           // Notification content
           Expanded(
@@ -234,16 +256,16 @@ class NotificationPage extends StatelessWidget {
                 Text(
                   name,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: isSmallScreen ? 14 : 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: isSmallScreen ? 1 : 2),
                 Text(
                   action,
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: isSmallScreen ? 12 : 14,
                     color: Colors.black54,
                   ),
                 ),
@@ -258,16 +280,16 @@ class NotificationPage extends StatelessWidget {
               Text(
                 timeAgo,
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: isSmallScreen ? 10 : 12,
                   color: Colors.black54,
                 ),
               ),
               if (showMoreIcon) ...[
-                const SizedBox(height: 4),
-                const Icon(
+                SizedBox(height: isSmallScreen ? 3 : 4),
+                Icon(
                   Icons.more_horiz,
                   color: Colors.grey,
-                  size: 20,
+                  size: isSmallScreen ? 18 : 20,
                 ),
               ],
             ],

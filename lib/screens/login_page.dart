@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/screens/signup_page.dart';
 import 'package:studyhive/screens/home_page.dart';
+import 'package:studyhive/screens/otp_verification_page.dart';
+import 'package:studyhive/services/auth_service.dart';
+import 'package:studyhive/utils/exceptions.dart';
 import 'dart:math' as math;
 
 class LoginPage extends StatefulWidget {
@@ -12,13 +15,35 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  // Create auth service instance
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  // Check if user is already authenticated
+  Future<void> _checkAuthentication() async {
+    final isAuthenticated = await _authService.isAuthenticated();
+    if (isAuthenticated && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    }
+  }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -39,8 +64,63 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Handle login initialization
+  Future<void> _handleLoginInit() async {
+    // Validate inputs
+    if (_emailController.text.isEmpty) {
+      setState(() => _errorMessage = "Email is required");
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      setState(() => _errorMessage = "Password is required");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call loginInit to verify credentials and send OTP
+      final success = await _authService.loginInit(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      if (success && mounted) {
+        // Navigate to OTP verification page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationPage(
+              email: _emailController.text,
+              type: VerificationType.login,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      String message = "Invalid email or password";
+      if (e is ApiException) {
+        message = e.message;
+      }
+      setState(() => _errorMessage = message);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
+    // Calculate appropriate card width for mobile
+    final cardWidth = math.min(screenSize.width * 0.85, 400.0);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -76,9 +156,8 @@ class _LoginPageState extends State<LoginPage> {
                         // StudyHive vector
                         Image.asset(
                           "assets/images/vector.png",
-                          // logo size dynamic based on the viewport width
-                          width: MediaQuery.of(context).size.width * 0.35,
-                          height: MediaQuery.of(context).size.width * 0.1,
+                          width: math.min(180, screenSize.width * 0.35),
+                          height: math.min(50, screenSize.width * 0.1),
                           fit: BoxFit.contain,
                         ),
                       ],
@@ -95,9 +174,8 @@ class _LoginPageState extends State<LoginPage> {
                         Padding(
                           padding: const EdgeInsets.only(top: 100),
                           child: Container(
-                            width: MediaQuery.of(context).size.width *
-                                0.55, // dynamic width of login container and beehive container based on viewport width
-                            padding: const EdgeInsets.all(20),
+                            width: cardWidth,
+                            padding: EdgeInsets.all(isSmallScreen ? 15 : 20),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,
@@ -119,20 +197,40 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: Column(
                               children: [
-                                SizedBox(
-                                    height: MediaQuery.of(context).size.width *
-                                        0.25), // Spacing between Login text
+                                // Space for beehive overlap
+                                SizedBox(height: 120),
+
                                 Text(
                                   "Login",
                                   style: GoogleFonts.montserrat(
-                                    fontSize: 40,
+                                    fontSize: isSmallScreen ? 32 : 40,
                                     fontWeight: FontWeight.w900,
                                     color: const Color(0xFF8B4513),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Username Field
+                                // Error message if any
+                                if (_errorMessage != null) ...[
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                        color: Colors.red,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 15),
+                                ],
+
+                                // Email Field
                                 Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -144,11 +242,12 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                   child: TextField(
-                                    controller: _usernameController,
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
                                     decoration: const InputDecoration(
-                                      hintText: "username",
+                                      hintText: "email",
                                       prefixIcon: Icon(
-                                        Icons.person_outline,
+                                        Icons.email_outlined,
                                         color: Color(0xFFBDBDBD),
                                       ),
                                       border: InputBorder.none,
@@ -220,16 +319,8 @@ class _LoginPageState extends State<LoginPage> {
                                     ],
                                   ),
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: Implement login logic
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const HomePage(),
-                                        ),
-                                      );
-                                    },
+                                    onPressed:
+                                        _isLoading ? null : _handleLoginInit,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFFFCA28),
                                       foregroundColor: const Color(0xFF8B4513),
@@ -238,13 +329,22 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       elevation: 0,
                                     ),
-                                    child: Text(
-                                      "Login",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                    child: _isLoading
+                                        ? SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: const Color(0xFF8B4513),
+                                            ),
+                                          )
+                                        : Text(
+                                            "Login",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                   ),
                                 ),
 
@@ -266,6 +366,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 10),
                               ],
                             ),
                           ),
@@ -274,15 +375,13 @@ class _LoginPageState extends State<LoginPage> {
                         // Honeycomb Logo - positioned on top
                         Positioned(
                           top: 0,
-                          left:
-                              -30, // Honeycomb container left and right padding
-                          right: -30,
                           child: Hero(
                             tag: 'beehive',
                             child: Material(
                               type: MaterialType.transparency,
                               child: Container(
-                                height: MediaQuery.of(context).size.width * 0.4,
+                                width: math.min(cardWidth * 0.9, 300),
+                                height: 160,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     begin: Alignment.topCenter,
@@ -310,10 +409,8 @@ class _LoginPageState extends State<LoginPage> {
                                 child: Center(
                                   child: Image.asset(
                                     "assets/images/beehive.png",
-                                    width: MediaQuery.of(context).size.width *
-                                        0.25,
-                                    height: MediaQuery.of(context).size.height *
-                                        0.25,
+                                    width: 100,
+                                    height: 100,
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -323,6 +420,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
+                    // Add extra space at the bottom for scrolling
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

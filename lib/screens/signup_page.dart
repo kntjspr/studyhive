@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:studyhive/screens/home_page.dart';
 import 'package:studyhive/screens/login_page.dart';
+import 'package:studyhive/screens/otp_verification_page.dart';
+import 'package:studyhive/services/auth_service.dart';
+import 'package:studyhive/utils/exceptions.dart';
+import 'dart:math' as math;
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -12,10 +16,16 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  // Create auth service instance
+  final AuthService _authService = AuthService();
 
   late AnimationController _animationController;
   late Animation<Offset> _beehiveAnimation;
@@ -43,15 +53,101 @@ class _SignupPageState extends State<SignupPage>
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
+  // Validate form inputs
+  bool _validateForm() {
+    if (_firstNameController.text.isEmpty) {
+      setState(() => _errorMessage = "First name is required");
+      return false;
+    }
+
+    if (_lastNameController.text.isEmpty) {
+      setState(() => _errorMessage = "Last name is required");
+      return false;
+    }
+
+    if (_emailController.text.isEmpty) {
+      setState(() => _errorMessage = "Email is required");
+      return false;
+    }
+
+    // Simple email validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      setState(() => _errorMessage = "Please enter a valid email");
+      return false;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      setState(() => _errorMessage = "Password is required");
+      return false;
+    }
+
+    if (_passwordController.text.length < 8) {
+      setState(() => _errorMessage = "Password must be at least 8 characters");
+      return false;
+    }
+
+    return true;
+  }
+
+  // Handle registration initialization
+  Future<void> _handleRegisterInit() async {
+    if (!_validateForm()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call registerInit to validate credentials and send OTP
+      final success = await _authService.registerInit(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      if (success && mounted) {
+        // Navigate to OTP verification page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationPage(
+              email: _emailController.text,
+              type: VerificationType.register,
+              firstName: _firstNameController.text,
+              lastName: _lastNameController.text,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      String message = "Registration failed. Please try again.";
+      if (e is ApiException) {
+        message = e.message;
+      }
+      setState(() => _errorMessage = message);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
+    // Calculate appropriate card width for mobile
+    final cardWidth = math.min(screenSize.width * 0.85, 400.0);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -86,8 +182,8 @@ class _SignupPageState extends State<SignupPage>
                         const SizedBox(width: 6),
                         Image.asset(
                           "assets/images/vector.png",
-                          width: MediaQuery.of(context).size.width * 0.35,
-                          height: MediaQuery.of(context).size.width * 0.1,
+                          width: math.min(180, screenSize.width * 0.35),
+                          height: math.min(50, screenSize.width * 0.1),
                           fit: BoxFit.contain,
                         ),
                       ],
@@ -102,8 +198,8 @@ class _SignupPageState extends State<SignupPage>
                       children: [
                         // Signup Card - positioned on top
                         Container(
-                          width: MediaQuery.of(context).size.width * 0.55,
-                          padding: const EdgeInsets.all(20),
+                          width: cardWidth,
+                          padding: EdgeInsets.all(isSmallScreen ? 15 : 20),
                           margin: const EdgeInsets.only(
                               bottom: 100), // Add margin for overlap
                           decoration: BoxDecoration(
@@ -130,14 +226,34 @@ class _SignupPageState extends State<SignupPage>
                               Text(
                                 "Sign up",
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 40,
+                                  fontSize: isSmallScreen ? 32 : 40,
                                   fontWeight: FontWeight.w900,
                                   color: const Color(0xFF8B4513),
                                 ),
                               ),
                               const SizedBox(height: 20),
 
-                              // Username Field
+                              // Error message if any
+                              if (_errorMessage != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: isSmallScreen ? 12 : 14,
+                                      color: Colors.red,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                              ],
+
+                              // First Name Field
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -149,9 +265,37 @@ class _SignupPageState extends State<SignupPage>
                                   ),
                                 ),
                                 child: TextField(
-                                  controller: _usernameController,
+                                  controller: _firstNameController,
                                   decoration: const InputDecoration(
-                                    hintText: "username",
+                                    hintText: "first name",
+                                    prefixIcon: Icon(
+                                      Icons.person_outline,
+                                      color: Color(0xFFBDBDBD),
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding:
+                                        EdgeInsets.symmetric(vertical: 15),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              // Last Name Field
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFCA28)
+                                        .withOpacity(0.5),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: TextField(
+                                  controller: _lastNameController,
+                                  decoration: const InputDecoration(
+                                    hintText: "last name",
                                     prefixIcon: Icon(
                                       Icons.person_outline,
                                       color: Color(0xFFBDBDBD),
@@ -178,6 +322,7 @@ class _SignupPageState extends State<SignupPage>
                                 ),
                                 child: TextField(
                                   controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
                                   decoration: const InputDecoration(
                                     hintText: "email",
                                     prefixIcon: Icon(
@@ -252,14 +397,8 @@ class _SignupPageState extends State<SignupPage>
                                   ],
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const HomePage(),
-                                      ),
-                                    );
-                                  },
+                                  onPressed:
+                                      _isLoading ? null : _handleRegisterInit,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFFFCA28),
                                     foregroundColor: const Color(0xFF8B4513),
@@ -268,13 +407,22 @@ class _SignupPageState extends State<SignupPage>
                                     ),
                                     elevation: 0,
                                   ),
-                                  child: Text(
-                                    "Sign up",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  child: _isLoading
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: const Color(0xFF8B4513),
+                                          ),
+                                        )
+                                      : Text(
+                                          "Sign up",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                 ),
                               ),
 
@@ -294,7 +442,7 @@ class _SignupPageState extends State<SignupPage>
                               ),
 
                               const SizedBox(
-                                  height: 140), // Space for beehive overlap
+                                  height: 120), // Space for beehive overlap
                             ],
                           ),
                         ),
@@ -302,8 +450,6 @@ class _SignupPageState extends State<SignupPage>
                         // Animated Beehive - positioned at bottom
                         Positioned(
                           bottom: 0,
-                          left: -(MediaQuery.of(context).size.width * 0.1),
-                          right: -(MediaQuery.of(context).size.width * 0.1),
                           child: SlideTransition(
                             position: _beehiveAnimation,
                             child: Hero(
@@ -311,8 +457,8 @@ class _SignupPageState extends State<SignupPage>
                               child: Material(
                                 type: MaterialType.transparency,
                                 child: Container(
-                                  height:
-                                      MediaQuery.of(context).size.width * 0.4,
+                                  width: math.min(cardWidth * 0.9, 300),
+                                  height: 160,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       begin: Alignment.topCenter,
@@ -340,11 +486,8 @@ class _SignupPageState extends State<SignupPage>
                                   child: Center(
                                     child: Image.asset(
                                       "assets/images/beehive.png",
-                                      width: MediaQuery.of(context).size.width *
-                                          0.25,
-                                      height:
-                                          MediaQuery.of(context).size.width *
-                                              0.25,
+                                      width: 100,
+                                      height: 100,
                                       fit: BoxFit.contain,
                                     ),
                                   ),
@@ -355,6 +498,8 @@ class _SignupPageState extends State<SignupPage>
                         ),
                       ],
                     ),
+                    // Add extra space at the bottom for scrolling
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

@@ -7,6 +7,10 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -25,18 +29,18 @@ class ProfilePage extends StatelessWidget {
             children: [
               // Back button and profile header
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
                 child: Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.black),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: isSmallScreen ? 12 : 16),
                     // Profile image
                     Container(
-                      width: 50,
-                      height: 50,
+                      width: isSmallScreen ? 45 : 50,
+                      height: isSmallScreen ? 45 : 50,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.grey[300],
@@ -49,11 +53,11 @@ class ProfilePage extends StatelessWidget {
                         child: Icon(
                           Icons.person,
                           color: Colors.grey[700],
-                          size: 30,
+                          size: isSmallScreen ? 25 : 30,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: isSmallScreen ? 12 : 16),
                     // Name and "You" text
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +65,7 @@ class ProfilePage extends StatelessWidget {
                         Text(
                           "Mitch Dumdum",
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
+                            fontSize: isSmallScreen ? 16 : 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -69,7 +73,7 @@ class ProfilePage extends StatelessWidget {
                         Text(
                           "You",
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: isSmallScreen ? 12 : 14,
                             color: Colors.black54,
                           ),
                         ),
@@ -83,6 +87,7 @@ class ProfilePage extends StatelessWidget {
 
               // Menu items
               _buildMenuItem(
+                context: context,
                 icon: Icons.person_outline,
                 title: "Personal Information",
                 onTap: () {
@@ -91,6 +96,7 @@ class ProfilePage extends StatelessWidget {
               ),
 
               _buildMenuItem(
+                context: context,
                 icon: Icons.settings_outlined,
                 title: "Account Setting",
                 onTap: () {
@@ -103,10 +109,10 @@ class ProfilePage extends StatelessWidget {
 
               // Sign out button
               Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(isSmallScreen ? 20.0 : 24.0),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: isSmallScreen ? 45 : 50,
                   child: ElevatedButton(
                     onPressed: () {
                       // Navigate to login page
@@ -127,7 +133,7 @@ class ProfilePage extends StatelessWidget {
                     child: Text(
                       "Sign out",
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: isSmallScreen ? 14 : 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -142,22 +148,29 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        padding: EdgeInsets.symmetric(
+            horizontal: isSmallScreen ? 20.0 : 24.0,
+            vertical: isSmallScreen ? 12.0 : 16.0),
         child: Row(
           children: [
-            Icon(icon, color: Colors.black87),
-            const SizedBox(width: 16),
+            Icon(icon, color: Colors.black87, size: isSmallScreen ? 20 : 24),
+            SizedBox(width: isSmallScreen ? 12 : 16),
             Text(
               title,
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: isSmallScreen ? 14 : 16,
                 color: Colors.black87,
               ),
             ),

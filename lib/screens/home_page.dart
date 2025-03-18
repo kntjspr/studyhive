@@ -8,7 +8,10 @@ import 'package:studyhive/screens/files_page.dart';
 import 'package:studyhive/screens/messages_page.dart';
 import 'package:studyhive/screens/notification_page.dart';
 import 'package:studyhive/screens/settings_page.dart';
+import 'package:studyhive/screens/login_page.dart';
+import 'package:studyhive/services/auth_service.dart';
 import 'package:studyhive/widgets/custom_navbar.dart';
+import 'dart:math' as math;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -135,6 +138,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDrawer() {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Drawer(
       child: Container(
         decoration: const BoxDecoration(
@@ -153,7 +160,7 @@ class _HomePageState extends State<HomePage> {
               _buildDrawerHeader(),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
                   children: [
                     _buildCategoryHeader("Account"),
                     _buildDrawerItem(
@@ -252,9 +259,52 @@ class _HomePageState extends State<HomePage> {
                     _buildDrawerItem(
                       icon: Icons.logout,
                       title: "Logout",
-                      onTap: () {
+                      onTap: () async {
                         Navigator.pop(context);
-                        // Handle logout
+                        // Show loading dialog
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFFF9800),
+                              ),
+                            );
+                          },
+                        );
+
+                        try {
+                          // Call logout method from AuthService
+                          final authService = AuthService();
+                          await authService.logout();
+
+                          // Navigate to login page
+                          if (context.mounted) {
+                            // Remove loading dialog
+                            Navigator.pop(context);
+                            // Navigate to login page and remove all previous routes
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginPage()),
+                              (route) => false,
+                            );
+                          }
+                        } catch (e) {
+                          // Handle errors
+                          if (context.mounted) {
+                            // Remove loading dialog
+                            Navigator.pop(context);
+                            // Show error snackbar
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Logout failed: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                     ),
                   ],
@@ -268,13 +318,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDrawerHeader() {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
       child: Row(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: isSmallScreen ? 50 : 60,
+            height: isSmallScreen ? 50 : 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
@@ -291,7 +345,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isSmallScreen ? 12 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,14 +353,14 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   "John Doe",
                   style: GoogleFonts.montserrat(
-                    fontSize: 18,
+                    fontSize: isSmallScreen ? 16 : 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   "john.doe@example.com",
                   style: GoogleFonts.montserrat(
-                    fontSize: 14,
+                    fontSize: isSmallScreen ? 12 : 14,
                     color: Colors.black54,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -338,6 +392,10 @@ class _HomePageState extends State<HomePage> {
     required String title,
     required VoidCallback onTap,
   }) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -356,12 +414,12 @@ class _HomePageState extends State<HomePage> {
           leading: Icon(
             icon,
             color: const Color(0xFFFF9800),
-            size: 22,
+            size: isSmallScreen ? 20 : 22,
           ),
           title: Text(
             title,
             style: GoogleFonts.montserrat(
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -371,8 +429,9 @@ class _HomePageState extends State<HomePage> {
             color: Colors.black45,
           ),
           onTap: onTap,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 12 : 16,
+              vertical: isSmallScreen ? 2 : 4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -387,18 +446,25 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+    final padding = isSmallScreen ? 16.0 : 20.0;
+    final spacing = isSmallScreen ? 16.0 : 20.0;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 16.0),
       child: Column(
         children: [
           // Group Meeting Card
           _buildFeatureCard(
+            context: context,
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
             ),
-            height: 160,
+            height: isSmallScreen ? 140 : 160,
             imagePath: 'assets/images/group_meeting.png',
             label: "Group Meeting Discussion\nand Livestream",
             onTap: () {
@@ -409,16 +475,17 @@ class HomeContent extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: spacing),
 
           // Task List Card
           _buildFeatureCard(
+            context: context,
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFFDCEDC8), Color(0xFFAED581)],
             ),
-            height: 120,
+            height: isSmallScreen ? 100 : 120,
             imagePath: 'assets/images/task_list.png',
             label: "Task List",
             onTap: () {
@@ -429,16 +496,17 @@ class HomeContent extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: spacing),
 
           // Calendar Card
           _buildFeatureCard(
+            context: context,
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFFFFCDD2), Color(0xFFFFAB91)],
             ),
-            height: 120,
+            height: isSmallScreen ? 100 : 120,
             imagePath: 'assets/images/calendar.png',
             label: "Calendar",
             onTap: () {
@@ -449,16 +517,17 @@ class HomeContent extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: spacing),
 
           // Files Card
           _buildFeatureCard(
+            context: context,
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFFE1F5FE), Color(0xFFB3E5FC)],
             ),
-            height: 120,
+            height: isSmallScreen ? 100 : 120,
             imagePath: 'assets/images/files.png',
             label: "Files",
             onTap: () {
@@ -468,18 +537,26 @@ class HomeContent extends StatelessWidget {
               );
             },
           ),
+
+          // Add extra space at the bottom for scrolling
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
   Widget _buildFeatureCard({
+    required BuildContext context,
     required LinearGradient gradient,
     required double height,
     required String imagePath,
     required String label,
     required VoidCallback onTap,
   }) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Column(
       children: [
         GestureDetector(
@@ -502,13 +579,13 @@ class HomeContent extends StatelessWidget {
               child: imagePath == 'assets/images/group_meeting.png'
                   ? Image.asset(
                       imagePath,
-                      width: 250,
-                      height: 250,
+                      width: isSmallScreen ? 200 : 250,
+                      height: isSmallScreen ? 200 : 250,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          width: 250,
-                          height: 250,
+                          width: isSmallScreen ? 200 : 250,
+                          height: isSmallScreen ? 200 : 250,
                           decoration: BoxDecoration(
                             color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
@@ -523,21 +600,21 @@ class HomeContent extends StatelessWidget {
                     )
                   : Image.asset(
                       imagePath,
-                      width: 150,
-                      height: 100,
+                      width: isSmallScreen ? 120 : 150,
+                      height: isSmallScreen ? 80 : 100,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          width: 100,
-                          height: 100,
+                          width: isSmallScreen ? 80 : 100,
+                          height: isSmallScreen ? 80 : 100,
                           decoration: BoxDecoration(
                             color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.image,
                             color: Colors.grey,
-                            size: 50,
+                            size: isSmallScreen ? 40 : 50,
                           ),
                         );
                       },
@@ -550,7 +627,7 @@ class HomeContent extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            fontSize: 16,
+            fontSize: isSmallScreen ? 14 : 16,
             color: Colors.black54,
             height: 1.2,
           ),

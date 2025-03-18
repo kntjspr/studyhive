@@ -25,6 +25,10 @@ class _TaskListPageState extends State<TaskListPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       backgroundColor: const Color(0xFFDCEDC8),
       appBar: AppBar(
@@ -33,7 +37,7 @@ class _TaskListPageState extends State<TaskListPage> {
         title: Text(
           "Task List",
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: isSmallScreen ? 18 : 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -47,7 +51,7 @@ class _TaskListPageState extends State<TaskListPage> {
         children: [
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
               itemCount: _tasks.length,
               itemBuilder: (context, index) {
                 return _buildTaskItem(_tasks[index]);
@@ -96,14 +100,20 @@ class _TaskListPageState extends State<TaskListPage> {
   }
 
   Widget _buildTaskItem(Task task) {
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: isSmallScreen ? 12 : 16),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: EdgeInsets.symmetric(
+            horizontal: isSmallScreen ? 12 : 16,
+            vertical: isSmallScreen ? 6 : 8),
         leading: Checkbox(
           value: task.isCompleted,
           activeColor: const Color(0xFFAED581),
@@ -116,7 +126,7 @@ class _TaskListPageState extends State<TaskListPage> {
         title: Text(
           task.title,
           style: GoogleFonts.poppins(
-            fontSize: 16,
+            fontSize: isSmallScreen ? 14 : 16,
             fontWeight: FontWeight.w500,
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
             color: task.isCompleted ? Colors.grey : Colors.black87,
@@ -136,6 +146,9 @@ class _TaskListPageState extends State<TaskListPage> {
 
   void _addNewTask() {
     final TextEditingController controller = TextEditingController();
+    // Get screen size for responsive calculations
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
 
     showDialog(
       context: context,
@@ -144,6 +157,7 @@ class _TaskListPageState extends State<TaskListPage> {
           "Add New Task",
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
+            fontSize: isSmallScreen ? 16 : 18,
           ),
         ),
         content: TextField(
@@ -156,7 +170,12 @@ class _TaskListPageState extends State<TaskListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                fontSize: isSmallScreen ? 13 : 14,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -170,7 +189,12 @@ class _TaskListPageState extends State<TaskListPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFAED581),
             ),
-            child: const Text("Add"),
+            child: Text(
+              "Add",
+              style: TextStyle(
+                fontSize: isSmallScreen ? 13 : 14,
+              ),
+            ),
           ),
         ],
       ),
