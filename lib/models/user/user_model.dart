@@ -15,6 +15,9 @@ class UserModel {
   /// Optional avatar URL of the user
   final String? avatar;
 
+  /// Optional bio/description of the user
+  final String? bio;
+
   /// When the user was created
   final DateTime createdAt;
 
@@ -28,6 +31,7 @@ class UserModel {
     required this.firstName,
     required this.lastName,
     this.avatar,
+    this.bio,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -35,11 +39,12 @@ class UserModel {
   /// Creates a UserModel from JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String,
+      id: json['id'].toString(),
       email: json['email'] as String,
       firstName: json['first_name'] as String,
       lastName: json['last_name'] as String,
       avatar: json['avatar'] as String?,
+      bio: json['bio'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -53,6 +58,7 @@ class UserModel {
       'first_name': firstName,
       'last_name': lastName,
       'avatar': avatar,
+      'bio': bio,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -65,6 +71,7 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? avatar,
+    String? bio,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -74,6 +81,7 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       avatar: avatar ?? this.avatar,
+      bio: bio ?? this.bio,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

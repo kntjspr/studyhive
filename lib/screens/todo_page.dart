@@ -158,38 +158,11 @@ class _TodoPageState extends State<TodoPage> {
             ),
             child: Row(
               children: [
-                const SizedBox(width: 20),
-                // Red squares column
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    5,
-                    (index) => Container(
-                      width: 20,
-                      height: 20,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE57373),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                // Blue bars column
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    5,
-                    (index) => Container(
-                      width: 120 - (index * 20),
-                      height: 15,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3F51B5),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Image.asset(
+                    'assets/images/task_list.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
               ],

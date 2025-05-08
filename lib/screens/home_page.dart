@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:studyhive/providers/auth_provider.dart';
 import 'package:studyhive/screens/profile_page.dart';
 import 'package:studyhive/screens/meetings_page.dart';
 import 'package:studyhive/screens/todo_page.dart';
@@ -27,6 +29,20 @@ class _HomePageState extends State<HomePage> {
     const HomeContent(),
     const NotificationPage(showNavBar: false),
   ];
+  
+  @override
+  void initState() {
+    super.initState();
+    // Ensure the user data is loaded
+    _loadUserData();
+  }
+  
+  Future<void> _loadUserData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isLoading && authProvider.user == null && authProvider.isAuthenticated) {
+      await authProvider.initialize();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -275,9 +291,9 @@ class _HomePageState extends State<HomePage> {
                         );
 
                         try {
-                          // Call logout method from AuthService
-                          final authService = AuthService();
-                          await authService.logout();
+                          // Use AuthProvider to logout
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          await authProvider.logout();
 
                           // Navigate to login page
                           if (context.mounted) {
@@ -321,6 +337,10 @@ class _HomePageState extends State<HomePage> {
     // Get screen size for responsive calculations
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 360;
+    
+    // Get the user from AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
 
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
@@ -339,8 +359,10 @@ class _HomePageState extends State<HomePage> {
                   offset: const Offset(0, 2),
                 ),
               ],
-              image: const DecorationImage(
-                image: AssetImage('assets/images/profile.png'),
+              image: DecorationImage(
+                image: user?.avatar != null
+                    ? NetworkImage(user!.avatar!)
+                    : const AssetImage('assets/images/profile.png') as ImageProvider,
                 fit: BoxFit.cover,
               ),
             ),
@@ -351,14 +373,14 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "John Doe",
+                  user?.fullName ?? "Guest User",
                   style: GoogleFonts.montserrat(
                     fontSize: isSmallScreen ? 16 : 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  "john.doe@example.com",
+                  user?.email ?? "",
                   style: GoogleFonts.montserrat(
                     fontSize: isSmallScreen ? 12 : 14,
                     color: Colors.black54,

@@ -17,17 +17,56 @@ class TaskService {
   })  : _httpClient = httpClient ?? http.Client(),
         _authService = authService ?? AuthService();
 
+  /// Helper method to handle token refresh if needed
+  Future<String> _getValidToken() async {
+    final token = await _authService.getToken();
+    if (token == null) {
+      throw ApiException(
+        statusCode: 401,
+        message: AppConstants.unauthorizedErrorMessage,
+      );
+    }
+    return token;
+  }
+
+  /// Executes API request with automatic token refresh if needed
+  Future<http.Response> _executeWithTokenRefresh({
+    required Future<http.Response> Function(String token) apiCall,
+  }) async {
+    try {
+      final token = await _getValidToken();
+      final response = await apiCall(token);
+      
+      // If unauthorized, try to refresh token and retry once
+      if (response.statusCode == 401) {
+        try {
+          await _authService.refreshToken();
+          final newToken = await _getValidToken();
+          return await apiCall(newToken);
+        } catch (e) {
+          // If refresh fails, propagate the original 401 response
+          return response;
+        }
+      }
+      
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Gets all tasks for the current user
   Future<List<TaskModel>> getTasks() async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.get(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.get(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['tasks']}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -54,14 +93,15 @@ class TaskService {
   /// Gets a specific task by ID
   Future<TaskModel> getTaskById(String taskId) async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.get(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.get(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['taskById']}$taskId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -95,8 +135,8 @@ class TaskService {
     String? category,
   }) async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.post(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.post(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['tasks']}'),
         headers: {
@@ -111,6 +151,7 @@ class TaskService {
           'status': status,
           'category': category,
         }),
+        ),
       );
 
       if (response.statusCode == 201) {
@@ -146,7 +187,6 @@ class TaskService {
     bool? isCompleted,
   }) async {
     try {
-      final token = await _authService.getToken();
       final Map<String, dynamic> updateData = {};
 
       if (title != null) updateData['title'] = title;
@@ -157,7 +197,8 @@ class TaskService {
       if (category != null) updateData['category'] = category;
       if (isCompleted != null) updateData['is_completed'] = isCompleted;
 
-      final response = await _httpClient.put(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.put(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['taskById']}$taskId'),
         headers: {
@@ -165,6 +206,7 @@ class TaskService {
           'Authorization': 'Bearer $token',
         },
         body: json.encode(updateData),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -191,14 +233,15 @@ class TaskService {
   /// Marks a task as completed
   Future<TaskModel> completeTask(String taskId) async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.put(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.put(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['completeTask']}$taskId/complete'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -225,14 +268,15 @@ class TaskService {
   /// Deletes a task
   Future<bool> deleteTask(String taskId) async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.delete(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.delete(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['taskById']}$taskId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        ),
       );
 
       if (response.statusCode == 204) {
@@ -258,14 +302,15 @@ class TaskService {
   /// Gets all task categories
   Future<List<String>> getCategories() async {
     try {
-      final token = await _authService.getToken();
-      final response = await _httpClient.get(
+      final response = await _executeWithTokenRefresh(
+        apiCall: (token) => _httpClient.get(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['taskCategories']}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        ),
       );
 
       if (response.statusCode == 200) {

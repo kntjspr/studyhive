@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:studyhive/providers/auth_provider.dart';
 import 'package:studyhive/screens/signup_page.dart';
 import 'package:studyhive/screens/home_page.dart';
-import 'package:studyhive/screens/otp_verification_page.dart';
 import 'package:studyhive/services/auth_service.dart';
 import 'package:studyhive/utils/exceptions.dart';
 import 'dart:math' as math;
@@ -32,8 +33,8 @@ class _LoginPageState extends State<LoginPage> {
 
   // Check if user is already authenticated
   Future<void> _checkAuthentication() async {
-    final isAuthenticated = await _authService.isAuthenticated();
-    if (isAuthenticated && mounted) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated && mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -64,8 +65,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Handle login initialization
-  Future<void> _handleLoginInit() async {
+  // Handle login
+  Future<void> _handleLogin() async {
     // Validate inputs
     if (_emailController.text.isEmpty) {
       setState(() => _errorMessage = "Email is required");
@@ -83,22 +84,22 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Call loginInit to verify credentials and send OTP
-      final success = await _authService.loginInit(
+      // Login using the auth service
+      await _authService.login(
         email: _emailController.text,
         password: _passwordController.text,
       );
-
-      if (success && mounted) {
-        // Navigate to OTP verification page
-        Navigator.push(
+      
+      if (mounted) {
+        // Update the auth provider state
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.initialize();
+        
+        // Navigate to home page
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => OtpVerificationPage(
-              email: _emailController.text,
-              type: VerificationType.login,
-            ),
-          ),
+          MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false, // Remove all previous routes
         );
       }
     } catch (e) {
@@ -320,7 +321,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   child: ElevatedButton(
                                     onPressed:
-                                        _isLoading ? null : _handleLoginInit,
+                                        _isLoading ? null : _handleLogin,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFFFCA28),
                                       foregroundColor: const Color(0xFF8B4513),

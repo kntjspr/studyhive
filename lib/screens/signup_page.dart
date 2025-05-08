@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:studyhive/providers/auth_provider.dart';
 import 'package:studyhive/screens/home_page.dart';
 import 'package:studyhive/screens/login_page.dart';
-import 'package:studyhive/screens/otp_verification_page.dart';
 import 'package:studyhive/services/auth_service.dart';
 import 'package:studyhive/utils/exceptions.dart';
 import 'dart:math' as math;
@@ -20,9 +21,12 @@ class _SignupPageState extends State<SignupPage>
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _showOtpField = false;
   String? _errorMessage;
+  String? _successMessage;
 
   // Create auth service instance
   final AuthService _authService = AuthService();
@@ -57,6 +61,7 @@ class _SignupPageState extends State<SignupPage>
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _otpController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -98,7 +103,23 @@ class _SignupPageState extends State<SignupPage>
     return true;
   }
 
-  // Handle registration initialization
+  // Validate OTP input
+  bool _validateOtp() {
+    if (_otpController.text.isEmpty) {
+      setState(() => _errorMessage = "Verification code is required");
+      return false;
+    }
+    
+    // Basic validation - OTP should be numeric
+    if (!RegExp(r'^\d+$').hasMatch(_otpController.text)) {
+      setState(() => _errorMessage = "Please enter a valid verification code");
+      return false;
+    }
+    
+    return true;
+  }
+
+  // Handle registration init (Step 1)
   Future<void> _handleRegisterInit() async {
     if (!_validateForm()) return;
 
@@ -108,25 +129,20 @@ class _SignupPageState extends State<SignupPage>
     });
 
     try {
-      // Call registerInit to validate credentials and send OTP
-      final success = await _authService.registerInit(
+      // Call registerInit method
+      final message = await _authService.registerInit(
         email: _emailController.text,
         password: _passwordController.text,
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
       );
 
-      if (success && mounted) {
-        // Navigate to OTP verification page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OtpVerificationPage(
-              email: _emailController.text,
-              type: VerificationType.register,
-              firstName: _firstNameController.text,
-              lastName: _lastNameController.text,
-            ),
-          ),
-        );
+      if (mounted) {
+        setState(() {
+          _showOtpField = true;
+          _successMessage = message;
+          _errorMessage = null;
+        });
       }
     } catch (e) {
       String message = "Registration failed. Please try again.";
@@ -136,6 +152,53 @@ class _SignupPageState extends State<SignupPage>
       setState(() => _errorMessage = message);
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+  
+  // Handle registration complete (Step 2)
+  Future<void> _handleRegisterComplete() async {
+    if (!_validateOtp()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call registerComplete method
+      await _authService.registerComplete(
+        token: _otpController.text,
+      );
+
+      if (mounted) {
+        // Update the auth provider state
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.initialize();
+        
+        // Navigate to home page after successful registration
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false, // Remove all previous routes
+        );
+      }
+    } catch (e) {
+      String message = "Verification failed. Please try again.";
+      if (e is ApiException) {
+        message = e.message;
+      }
+      setState(() => _errorMessage = message);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // Handle form submission based on current step
+  Future<void> _handleSubmit() async {
+    if (_showOtpField) {
+      await _handleRegisterComplete();
+    } else {
+      await _handleRegisterInit();
     }
   }
 
@@ -233,137 +296,92 @@ class _SignupPageState extends State<SignupPage>
                               ),
                               const SizedBox(height: 20),
 
-                              // Error message if any
-                              if (_errorMessage != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: isSmallScreen ? 12 : 14,
-                                      color: Colors.red,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const SizedBox(height: 15),
-                              ],
-
-                              // First Name Field
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFCA28)
-                                        .withOpacity(0.5),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: TextField(
+                              // Input fields
+                              ...[
+                                // First name input
+                                TextField(
                                   controller: _firstNameController,
-                                  decoration: const InputDecoration(
-                                    hintText: "first name",
-                                    prefixIcon: Icon(
-                                      Icons.person_outline,
-                                      color: Color(0xFFBDBDBD),
+                                  enabled: !_showOtpField && !_isLoading,
+                                  decoration: InputDecoration(
+                                    hintText: "First Name",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    border: InputBorder.none,
-                                    contentPadding:
-                                        EdgeInsets.symmetric(vertical: 15),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: isSmallScreen ? 12.0 : 16.0,
+                                    ),
                                   ),
                                 ),
-                              ),
+                                SizedBox(height: isSmallScreen ? 12 : 16),
 
-                              const SizedBox(height: 15),
-
-                              // Last Name Field
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFCA28)
-                                        .withOpacity(0.5),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: TextField(
+                                // Last name input
+                                TextField(
                                   controller: _lastNameController,
-                                  decoration: const InputDecoration(
-                                    hintText: "last name",
-                                    prefixIcon: Icon(
-                                      Icons.person_outline,
-                                      color: Color(0xFFBDBDBD),
+                                  enabled: !_showOtpField && !_isLoading,
+                                  decoration: InputDecoration(
+                                    hintText: "Last Name",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    border: InputBorder.none,
-                                    contentPadding:
-                                        EdgeInsets.symmetric(vertical: 15),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: isSmallScreen ? 12.0 : 16.0,
+                                    ),
                                   ),
                                 ),
-                              ),
+                                SizedBox(height: isSmallScreen ? 12 : 16),
 
-                              const SizedBox(height: 15),
-
-                              // Email Field
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFCA28)
-                                        .withOpacity(0.5),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: TextField(
+                                // Email input
+                                TextField(
                                   controller: _emailController,
+                                  enabled: !_showOtpField && !_isLoading,
                                   keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                    hintText: "email",
-                                    prefixIcon: Icon(
-                                      Icons.email_outlined,
-                                      color: Color(0xFFBDBDBD),
+                                  decoration: InputDecoration(
+                                    hintText: "Email",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    border: InputBorder.none,
-                                    contentPadding:
-                                        EdgeInsets.symmetric(vertical: 15),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: isSmallScreen ? 12.0 : 16.0,
+                                    ),
                                   ),
                                 ),
-                              ),
+                                SizedBox(height: isSmallScreen ? 12 : 16),
 
-                              const SizedBox(height: 15),
-
-                              // Password Field
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFCA28)
-                                        .withOpacity(0.5),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: TextField(
+                                // Password input
+                                TextField(
                                   controller: _passwordController,
+                                  enabled: !_showOtpField && !_isLoading,
                                   obscureText: !_isPasswordVisible,
                                   decoration: InputDecoration(
-                                    hintText: "password",
-                                    prefixIcon: const Icon(
-                                      Icons.lock_outline,
-                                      color: Color(0xFFBDBDBD),
+                                    hintText: "Password",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: isSmallScreen ? 12.0 : 16.0,
                                     ),
                                     suffixIcon: IconButton(
                                       icon: Icon(
                                         _isPasswordVisible
                                             ? Icons.visibility_off
                                             : Icons.visibility,
-                                        color: const Color(0xFFBDBDBD),
+                                        color: Colors.grey,
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -372,59 +390,108 @@ class _SignupPageState extends State<SignupPage>
                                         });
                                       },
                                     ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 15),
                                   ),
                                 ),
-                              ),
-
-                              const SizedBox(height: 25),
-
-                              // Sign up Button
-                              Container(
-                                width: 150,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFFCA28)
-                                          .withOpacity(0.5),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _isLoading ? null : _handleRegisterInit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFFCA28),
-                                    foregroundColor: const Color(0xFF8B4513),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(25),
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  child: _isLoading
-                                      ? SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: const Color(0xFF8B4513),
-                                          ),
-                                        )
-                                      : Text(
-                                          "Sign up",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                
+                                // OTP input field (conditionally shown)
+                                if (_showOtpField) ...[
+                                  SizedBox(height: isSmallScreen ? 16 : 20),
+                                  
+                                  // Success message
+                                  if (_successMessage != null)
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.green.shade300,
                                         ),
+                                      ),
+                                      child: Text(
+                                        _successMessage!,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: isSmallScreen ? 12 : 14,
+                                          color: Colors.green.shade800,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  
+                                  SizedBox(height: isSmallScreen ? 16 : 20),
+                                  
+                                  TextField(
+                                    controller: _otpController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      hintText: "Enter verification code",
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                        vertical: isSmallScreen ? 12.0 : 16.0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                
+                                SizedBox(height: isSmallScreen ? 20 : 24),
+
+                                // Error message
+                                if (_errorMessage != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.red,
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+
+                                // Sign up button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: isSmallScreen ? 50 : 55,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isLoading ? null : _handleSubmit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFCA28),
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: isSmallScreen ? 12 : 16),
+                                    ),
+                                    child: _isLoading
+                                        ? SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.black),
+                                            ),
+                                          )
+                                        : Text(
+                                            _showOtpField ? "Verify & Register" : "Register",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: isSmallScreen ? 14 : 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                  ),
                                 ),
-                              ),
+                              ],
 
                               const SizedBox(height: 20),
 

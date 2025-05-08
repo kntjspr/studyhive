@@ -38,9 +38,8 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
-  /// Initiates login process with email and password
-  /// Returns true if credentials are valid and OTP was sent
-  Future<bool> loginInit({
+  /// Logs in a user with email and password
+  Future<UserModel> login({
     required String email,
     required String password,
   }) async {
@@ -57,83 +56,34 @@ class AuthService {
         }),
       );
 
-      final Map<String, dynamic> data = json.decode(response.body);
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        // Store email and password temporarily for the complete step and resend functionality
-        await _secureStorage.write(key: 'temp_email', value: email);
-        await _secureStorage.write(key: 'temp_password', value: password);
-        return true;
-      } else {
-        throw ApiException(
-          statusCode: response.statusCode,
-          message: data['message'] ?? AppConstants.unknownErrorMessage,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException(
-        statusCode: 500,
-        message: e.toString(),
-      );
-    }
-  }
-
-  /// Completes login process with OTP verification
-  Future<UserModel> loginComplete({
-    required String token, // OTP token
-  }) async {
-    try {
-      final email = await _secureStorage.read(key: 'temp_email');
-
-      if (email == null) {
-        throw ApiException(
-          statusCode: 400,
-          message: 'Please initiate login again',
-        );
-      }
-
-      final response = await _httpClient.post(
-        Uri.parse(
-            '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['loginComplete']}'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'email': email,
-          'token': token,
-        }),
-      );
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
         if (data['success'] != true) {
           throw ApiException(
             statusCode: 400,
-            message: data['message'] ?? 'Invalid OTP',
+            message: data['message'] ?? 'Invalid credentials',
           );
         }
 
-        final accessToken = data['data']['accessToken'] as String;
+        // Extract user and token data
         final userData = data['data']['user'] as Map<String, dynamic>;
+        final accessToken = data['data']['session']['access_token'] as String;
+        final refreshToken = data['data']['session']['refresh_token'] as String;
 
-        // Store the token
+        // Store the tokens
         await setToken(accessToken);
+        await _secureStorage.write(key: 'refresh_token', value: refreshToken);
 
         // Create user model
         final UserModel user = UserModel(
-          id: userData['id'],
+          id: userData['id'].toString(),
           email: userData['email'],
           firstName: userData['first_name'] ?? '',
           lastName: userData['last_name'] ?? '',
           avatar: userData['avatar'],
-          createdAt: DateTime.parse(
-              userData['created_at'] ?? DateTime.now().toIso8601String()),
-          updatedAt: DateTime.parse(
-              userData['updated_at'] ?? DateTime.now().toIso8601String()),
+          createdAt: DateTime.now(), // Use current time if not provided
+          updatedAt: DateTime.now(), // Use current time if not provided
         );
 
         // Store user data
@@ -148,10 +98,6 @@ class AuthService {
           await _secureStorage.write(
               key: AppConstants.userAvatarKey, value: user.avatar);
         }
-
-        // Clean up temporary storage
-        await _secureStorage.delete(key: 'temp_email');
-        await _secureStorage.delete(key: 'temp_password');
 
         return user;
       } else {
@@ -172,28 +118,12 @@ class AuthService {
     }
   }
 
-  /// Logs in a user with email and password - two-step process
-  /// Kept for backward compatibility
-  Future<UserModel> login({
+  /// Starts the registration process and sends OTP to email
+  Future<String> registerInit({
     required String email,
     required String password,
-  }) async {
-    // Initialize login
-    await loginInit(email: email, password: password);
-
-    // This would be replaced with OTP verification in actual flow
-    // For now, just throw an exception to remind developers to use the two-step flow
-    throw ApiException(
-      statusCode: 400,
-      message:
-          'Please use loginInit and loginComplete for the two-step authentication flow',
-    );
-  }
-
-  /// Initiates user registration
-  Future<bool> registerInit({
-    required String email,
-    required String password,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       final response = await _httpClient.post(
@@ -205,17 +135,34 @@ class AuthService {
         body: json.encode({
           'email': email,
           'password': password,
+          'first_name': firstName,
+          'last_name': lastName,
         }),
       );
 
-      final Map<String, dynamic> data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        // Store email and password temporarily for the complete step
+        if (data['success'] != true) {
+          throw ApiException(
+            statusCode: 400,
+            message: data['message'] ?? 'Registration initialization failed',
+          );
+        }
+
+        // Store email temporarily for the complete step
         await _secureStorage.write(key: 'temp_email', value: email);
         await _secureStorage.write(key: 'temp_password', value: password);
-        return true;
+        if (firstName != null) {
+          await _secureStorage.write(key: 'temp_first_name', value: firstName);
+        }
+        if (lastName != null) {
+          await _secureStorage.write(key: 'temp_last_name', value: lastName);
+        }
+
+        return data['message'] ?? 'Verification code sent to your email';
       } else {
+        final Map<String, dynamic> data = json.decode(response.body);
         throw ApiException(
           statusCode: response.statusCode,
           message: data['message'] ?? AppConstants.unknownErrorMessage,
@@ -232,19 +179,18 @@ class AuthService {
     }
   }
 
-  /// Completes user registration with OTP verification
+  /// Completes the registration process with OTP verification
   Future<UserModel> registerComplete({
-    required String token, // OTP token
-    String? firstName,
-    String? lastName,
+    required String token,
   }) async {
     try {
+      // Get stored temporary data
       final email = await _secureStorage.read(key: 'temp_email');
-
+      
       if (email == null) {
         throw ApiException(
           statusCode: 400,
-          message: 'Please initiate registration again',
+          message: 'Missing registration data. Please start the registration process again.',
         );
       }
 
@@ -257,38 +203,42 @@ class AuthService {
         body: json.encode({
           'email': email,
           'token': token,
-          'first_name': firstName,
-          'last_name': lastName,
         }),
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
         if (data['success'] != true) {
           throw ApiException(
             statusCode: 400,
-            message: data['message'] ?? 'Invalid OTP',
+            message: data['message'] ?? 'Registration verification failed',
           );
         }
 
-        final accessToken = data['data']['accessToken'] as String;
+        // Extract user and token data
         final userData = data['data']['user'] as Map<String, dynamic>;
+        final accessToken = data['data']['session']['access_token'] as String;
+        final refreshToken = data['data']['session']['refresh_token'] as String;
 
-        // Store the token
+        // Store the tokens
         await setToken(accessToken);
+        await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+
+        // Get stored temporary data
+        final firstName = await _secureStorage.read(key: 'temp_first_name');
+        final lastName = await _secureStorage.read(key: 'temp_last_name');
 
         // Create user model
         final UserModel user = UserModel(
-          id: userData['id'],
+          id: userData['id'].toString(),
           email: userData['email'],
-          firstName: firstName ?? '',
-          lastName: lastName ?? '',
+          firstName: firstName ?? userData['first_name'] ?? '',
+          lastName: lastName ?? userData['last_name'] ?? '',
           avatar: userData['avatar'],
-          createdAt: DateTime.parse(
-              userData['created_at'] ?? DateTime.now().toIso8601String()),
-          updatedAt: DateTime.parse(
-              userData['updated_at'] ?? DateTime.now().toIso8601String()),
+          bio: userData['bio'],
+          createdAt: DateTime.parse(userData['created_at'] ?? DateTime.now().toIso8601String()),
+          updatedAt: DateTime.parse(userData['updated_at'] ?? DateTime.now().toIso8601String()),
         );
 
         // Store user data
@@ -307,6 +257,8 @@ class AuthService {
         // Clean up temporary storage
         await _secureStorage.delete(key: 'temp_email');
         await _secureStorage.delete(key: 'temp_password');
+        await _secureStorage.delete(key: 'temp_first_name');
+        await _secureStorage.delete(key: 'temp_last_name');
 
         return user;
       } else {
@@ -325,27 +277,6 @@ class AuthService {
         message: e.toString(),
       );
     }
-  }
-
-  /// Registers a new user - two-step process
-  /// Kept for backward compatibility
-  Future<UserModel> register({
-    required String email,
-    required String password,
-    required String firstName,
-    required String lastName,
-    String? avatar,
-  }) async {
-    // Initialize registration
-    await registerInit(email: email, password: password);
-
-    // This would be replaced with OTP verification in actual flow
-    // For now, just throw an exception to remind developers to use the two-step flow
-    throw ApiException(
-      statusCode: 400,
-      message:
-          'Please use registerInit and registerComplete for the two-step authentication flow',
-    );
   }
 
   /// Logs out the current user
@@ -367,6 +298,7 @@ class AuthService {
 
       // Clear stored data regardless of response
       await removeToken();
+      await _secureStorage.delete(key: 'refresh_token');
       await _secureStorage.delete(key: AppConstants.userIdKey);
       await _secureStorage.delete(key: AppConstants.userEmailKey);
       await _secureStorage.delete(key: AppConstants.userNameKey);
@@ -376,6 +308,7 @@ class AuthService {
     } catch (e) {
       // Clear stored data even if there's an error
       await removeToken();
+      await _secureStorage.delete(key: 'refresh_token');
       await _secureStorage.delete(key: AppConstants.userIdKey);
       await _secureStorage.delete(key: AppConstants.userEmailKey);
       await _secureStorage.delete(key: AppConstants.userNameKey);
@@ -430,7 +363,7 @@ class AuthService {
   Future<UserModel> updateUserProfile({
     String? firstName,
     String? lastName,
-    String? avatar,
+    String? bio,
   }) async {
     try {
       final token = await getToken();
@@ -444,9 +377,9 @@ class AuthService {
       final Map<String, dynamic> updateData = {};
       if (firstName != null) updateData['first_name'] = firstName;
       if (lastName != null) updateData['last_name'] = lastName;
-      if (avatar != null) updateData['avatar'] = avatar;
+      if (bio != null) updateData['bio'] = bio;
 
-      final response = await _httpClient.put(
+      final response = await _httpClient.patch(
         Uri.parse(
             '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['updateProfile']}'),
         headers: {
@@ -489,26 +422,196 @@ class AuthService {
     }
   }
 
-  /// Resend OTP for login or registration
-  Future<bool> resendOtp({required String email, required bool isLogin}) async {
-    try {
-      // Get stored password from secure storage
-      final password = await _secureStorage.read(key: 'temp_password');
+  /// Gets the stored refresh token
+  Future<String?> getRefreshToken() async {
+    return await _secureStorage.read(key: 'refresh_token');
+  }
 
-      if (password == null) {
+  /// Refreshes the authentication token using refresh token
+  Future<Map<String, dynamic>> refreshToken() async {
+    try {
+      final refreshToken = await getRefreshToken();
+
+      if (refreshToken == null) {
         throw ApiException(
-          statusCode: 400,
-          message:
-              'Session expired. Please restart the login/registration process.',
+          statusCode: 401,
+          message: AppConstants.unauthorizedErrorMessage,
         );
       }
 
-      if (isLogin) {
-        // Reinitialize login
-        return await loginInit(email: email, password: password);
+      final response = await _httpClient.post(
+        Uri.parse(
+            '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['refreshToken']}'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'refresh_token': refreshToken,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        
+        if (data['success'] != true) {
+          throw ApiException(
+            statusCode: 400,
+            message: data['message'] ?? 'Failed to refresh token',
+          );
+        }
+
+        final accessToken = data['data']['session']['access_token'] as String;
+        final newRefreshToken = data['data']['session']['refresh_token'] as String;
+        final userData = data['data']['user'] as Map<String, dynamic>;
+
+        // Store the new tokens
+        await setToken(accessToken);
+        await _secureStorage.write(key: 'refresh_token', value: newRefreshToken);
+
+        return {
+          'user': UserModel(
+            id: userData['id'],
+            email: userData['email'],
+            firstName: userData['first_name'] ?? '',
+            lastName: userData['last_name'] ?? '',
+            avatar: userData['avatar'],
+            createdAt: DateTime.parse(
+                userData['created_at'] ?? DateTime.now().toIso8601String()),
+            updatedAt: DateTime.parse(
+                userData['updated_at'] ?? DateTime.now().toIso8601String()),
+          ),
+          'accessToken': accessToken,
+          'refreshToken': newRefreshToken,
+        };
       } else {
-        // Reinitialize registration
-        return await registerInit(email: email, password: password);
+        // If refresh fails, clean up tokens and force re-login
+        await removeToken();
+        await _secureStorage.delete(key: 'refresh_token');
+        
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: json.decode(response.body)['message'] ?? 
+              'Session expired. Please log in again.',
+        );
+      }
+    } catch (e) {
+      // On any error, force re-login
+      await removeToken();
+      await _secureStorage.delete(key: 'refresh_token');
+      
+      if (e is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        statusCode: 500,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /// Checks if the server is healthy
+  Future<bool> healthCheck() async {
+    try {
+      final response = await _httpClient.get(
+        Uri.parse(
+            '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['healthCheck']}'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return data['status'] == 'success';
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// [Deprecated] Registers a new user (old single-step method)
+  Future<UserModel> register({
+    required String email,
+    required String password,
+    String? firstName,
+    String? lastName,
+    String? avatar,
+  }) async {
+    // Start registration process
+    await registerInit(
+      email: email,
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    
+    // For backward compatibility we would need OTP here, but can't automatically handle
+    // So this method is now deprecated - user should use registerInit and registerComplete
+    throw ApiException(
+      statusCode: 400,
+      message: 'This method is deprecated. Please use registerInit and registerComplete instead.',
+    );
+  }
+
+  /// Uploads a profile avatar image
+  Future<UserModel> uploadAvatar(List<int> imageBytes, String fileName) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        throw ApiException(
+          statusCode: 401,
+          message: AppConstants.unauthorizedErrorMessage,
+        );
+      }
+
+      // Create multipart request
+      final uri = Uri.parse(
+          '${AppConstants.apiBaseUrl}${AppConstants.apiEndpoints['uploadAvatar']}');
+      final request = http.MultipartRequest('POST', uri);
+      
+      // Add authorization header
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // Add file
+      final multipartFile = http.MultipartFile.fromBytes(
+        'avatar',
+        imageBytes,
+        filename: fileName,
+      );
+      request.files.add(multipartFile);
+      
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        
+        if (data['success'] != true) {
+          throw ApiException(
+            statusCode: 400,
+            message: data['message'] ?? 'Failed to upload avatar',
+          );
+        }
+        
+        final userData = data['data'];
+        final UserModel user = UserModel.fromJson(userData);
+        
+        // Update stored avatar URL
+        if (user.avatar != null) {
+          await _secureStorage.write(
+              key: AppConstants.userAvatarKey, value: user.avatar);
+        }
+        
+        return user;
+      } else {
+        final Map<String, dynamic> data = json.decode(response.body);
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: data['message'] ?? AppConstants.unknownErrorMessage,
+        );
       }
     } catch (e) {
       if (e is ApiException) {

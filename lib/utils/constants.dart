@@ -59,54 +59,56 @@ class AppConstants {
   };
 
   /// API base URL
-  static const String apiBaseUrl = 'http://localhost:3000';
+  static const String apiBaseUrl = 'http://localhost:8000';
 
   /// API endpoints
   static const Map<String, String> apiEndpoints = {
     // Auth endpoints
-    'loginInit': '/auth/login/init',
+    'loginInit': '/auth/login',
     'loginComplete': '/auth/login/complete',
     'registerInit': '/auth/register/init',
     'registerComplete': '/auth/register/complete',
     'logout': '/auth/logout',
     'refreshToken': '/auth/refresh-token',
+    'healthCheck': '/health/',
 
     // User endpoints
-    'userProfile': '/users/profile',
-    'updateProfile': '/users/profile',
+    'userProfile': '/api/profile/',
+    'updateProfile': '/api/profile/',
+    'uploadAvatar': '/api/profile/avatar/',
 
     // Task endpoints - keeping these for future implementation
-    'tasks': '/tasks',
+    'tasks': '/tasks/',
     'taskById': '/tasks/', // Append task ID
     'completeTask': '/tasks/', // Append task ID + /complete
-    'taskCategories': '/tasks/categories',
+    'taskCategories': '/tasks/categories/',
 
     // Event endpoints
-    'events': '/events',
+    'events': '/events/',
     'eventById': '/events/', // Append event ID
 
     // Meeting endpoints
-    'meetings': '/meetings',
+    'meetings': '/meetings/',
     'meetingById': '/meetings/', // Append meeting ID
     'joinMeeting': '/meetings/', // Append meeting ID + /join
     'leaveMeeting': '/meetings/', // Append meeting ID + /leave
 
     // Message endpoints
-    'messages': '/messages',
+    'messages': '/messages/',
     'messageById': '/messages/', // Append message ID
 
     // File endpoints
-    'files': '/files',
+    'files': '/files/',
     'fileById': '/files/', // Append file ID
 
     // Study group endpoints
-    'studyGroups': '/study-groups',
+    'studyGroups': '/study-groups/',
     'studyGroupById': '/study-groups/', // Append group ID
     'joinStudyGroup': '/study-groups/', // Append group ID + /join
     'leaveStudyGroup': '/study-groups/', // Append group ID + /leave
 
     // Note endpoints
-    'notes': '/notes',
+    'notes': '/notes/',
     'noteById': '/notes/', // Append note ID
   };
 
@@ -170,7 +172,7 @@ class AppConstants {
   static const String splashRoute = '/';
   static const String onboardingRoute = '/onboarding';
   static const String loginRoute = '/login';
-  static const String registerRoute = '/register';
+  static const String registerRoute = '/register/';
   static const String homeRoute = '/home';
   static const String profileRoute = '/profile';
   static const String taskListRoute = '/tasks';
