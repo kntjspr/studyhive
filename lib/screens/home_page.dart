@@ -11,7 +11,6 @@ import 'package:studyhive/screens/messages_page.dart';
 import 'package:studyhive/screens/notification_page.dart';
 import 'package:studyhive/screens/settings_page.dart';
 import 'package:studyhive/screens/login_page.dart';
-import 'package:studyhive/services/auth_service.dart';
 import 'package:studyhive/widgets/custom_navbar.dart';
 import 'dart:math' as math;
 
@@ -29,14 +28,14 @@ class _HomePageState extends State<HomePage> {
     const HomeContent(),
     const NotificationPage(showNavBar: false),
   ];
-  
+
   @override
   void initState() {
     super.initState();
     // Ensure the user data is loaded
     _loadUserData();
   }
-  
+
   Future<void> _loadUserData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isLoading && authProvider.user == null && authProvider.isAuthenticated) {
@@ -337,7 +336,7 @@ class _HomePageState extends State<HomePage> {
     // Get screen size for responsive calculations
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 360;
-    
+
     // Get the user from AuthProvider
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;

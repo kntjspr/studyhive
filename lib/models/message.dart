@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 /// Represents a message or conversation in the messaging system
 class Message {

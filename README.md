@@ -49,7 +49,7 @@ StudyHive is a comprehensive study management application designed to help stude
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/studyhive.git
+   git clone https://github.com/kntjspr/studyhive.git
    ```
 
 2. Navigate to the project directory:

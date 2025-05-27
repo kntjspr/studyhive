@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:studyhive/models/task/task_model.dart';
 import 'package:studyhive/services/task_service.dart';
-import 'package:studyhive/utils/exceptions.dart';
 
 /// Provider for managing task state
 class TaskProvider extends ChangeNotifier {
